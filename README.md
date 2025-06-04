@@ -125,6 +125,10 @@ If you need to allow external users:
 AAD_TENANT_ID=<your-tenant-guid>
 API_APP_ID=<server-app-client-id>
 CLIENT_APP_ID=<desktop-app-client-id>
+
+# Optional: For service principal authentication (no browser required)
+# SERVICE_PRINCIPAL_CLIENT_ID=<service-principal-client-id>
+# SERVICE_PRINCIPAL_CLIENT_SECRET=<service-principal-secret>
 ```
 
 ## 5. Testing the API
@@ -159,15 +163,83 @@ cd aad-protected-api
 # Activate the virtual environment in this terminal too!
 .venv\Scripts\activate        # Windows
 # source .venv/bin/activate   # Linux/macOS
+```
 
-# Run the client - two options available:
+#### Browser-Based Authentication
 
-# Option 1: Using azure-identity (recommended)
+These methods will open a browser window for authentication:
+
+```bash
+# Option 1: Using azure-identity
 python client/get_token_identity.py
 
 # Option 2: Using MSAL directly
 python client/get_token_msal.py
 ```
+
+#### Non-Browser Authentication Methods
+
+For corporate environments where users are already authenticated or need to avoid browser popups:
+
+**1. Shared Token Cache (Recommended for Developers)**
+```bash
+# Uses existing authentication from VS/VS Code or Azure CLI
+python client/get_token_shared_cache.py
+
+# Prerequisites: Be logged in via one of:
+# - Visual Studio or VS Code with Azure extension
+# - Azure CLI: az login --use-device-code
+```
+
+**2. Device Code Flow**
+```bash
+# Authenticate on a different device (phone, another computer)
+python client/get_token_device_code.py
+
+# You'll get a code to enter at https://microsoft.com/devicelogin
+```
+
+**3. Default Credential Chain (No Browser)**
+```bash
+# Tries multiple auth methods automatically
+python client/get_token_default_no_browser.py
+
+# Will attempt in order:
+# 1. Environment variables (service principal)
+# 2. Managed Identity (if in Azure)
+# 3. VS/VS Code shared cache
+# 4. Azure CLI credentials
+# 5. Azure PowerShell credentials
+```
+
+**4. Service Principal (App-Only Authentication)**
+```bash
+# First, create a service principal:
+az ad sp create-for-rbac --name "YourAPIClient" --sdk-auth
+
+# Add to your .env file:
+# SERVICE_PRINCIPAL_CLIENT_ID=<from-output>
+# SERVICE_PRINCIPAL_CLIENT_SECRET=<from-output>
+
+# Then run:
+python client/get_token_service_principal.py
+
+# Note: This authenticates as the app, not as a user
+```
+
+#### Setup for Non-Browser Authentication
+
+**For Corporate Users:**
+```bash
+# One-time setup via Azure CLI (no browser on same machine)
+az login --use-device-code
+
+# Then use any of the non-browser clients
+python client/get_token_shared_cache.py
+```
+
+**For CI/CD or Automation:**
+Use the service principal method with credentials stored securely in environment variables.
 
 ### 5.3 Troubleshooting
 
