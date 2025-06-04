@@ -1,0 +1,6 @@
+fastapi==0.110.0
+uvicorn==0.27.0
+fastapi-azure-auth>=4.4,<5
+python-dotenv>=1.0.1
+azure-identity>=1.15.0      # used internally by fastapi-azure-auth
+msal==1.32.3
